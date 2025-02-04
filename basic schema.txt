@@ -1,0 +1,19 @@
+All Kanji - Including Stroke Orders
+    - Kanji Name | PK
+    - Filename
+    - svg file
+
+
+All Kanji - Complete
+    - Kanji Name
+    - Filename | PK
+    - animation file
+    - hiragana
+
+    - Refence All Kanji for svg file
+
+Current Kanji
+    - Kanji Name | PK
+    - user strokes
+
+    - Reference All Kanji for Filename and svg file
