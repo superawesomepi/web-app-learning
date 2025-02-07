@@ -1,8 +1,15 @@
 <!DOCTYPE html>
+    <head>
+        <link href="./main_style.css" rel="stylesheet">
+    </head>
     <body>
         <img id="myKanji" src="./complete_kanji/(afurika)zou_12.svg" alt="Kanji image">
-        
-        <canvas id="myCanvas" width="400" height="300" style="border:1px solid #000000;"></canvas> 
+        <div class="parent">
+            <canvas id="svgCanvas" width="400" height="300" style="border:1px solid #000000;"></canvas>
+            <div class="child">
+                <canvas id="seeCanvas" width="400" height="300" style="border:1px solid #000000;"></canvas>
+            </div>
+        </div>
         <input type="color" id="colorPicker">
         <button id="drawReset" class="drawReset">Reset Drawing</button>
         <button id="kanjiReset" class="kanjiReset">New Kanji</button>

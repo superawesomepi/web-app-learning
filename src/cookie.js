@@ -1,42 +1,50 @@
 '// @ts-ignore'
 import C2S from 'canvas2svg'; // import the library for svg canvas, otherwise canvas can only be saved as png, jpeg, or webp
-const canvas = document.getElementById('myCanvas');
+const svgCanvas = document.getElementById('svgCanvas');
+const seeCanvas = document.getElementById('seeCanvas');
 const colorPicker = document.getElementById('colorPicker');
-const ctx = new C2S({ width: canvas.width, height: canvas.height }); // get the canvas object from html, and set it to use C2S
+const svgctx = new C2S({ width: svgCanvas.width, height: svgCanvas.height }); // get the canvas object from html, and set it to use C2S
+const seectx = seeCanvas.getContext("2d");
+
 
 let isDrawing = false;
-ctx.lineWidth = 10;
+svgctx.lineWidth = 10;
+seectx.lineWidth = 10;
 let drawNum = 1;
 init('list.txt')
 
 
 colorPicker.addEventListener('change', (event) => {
-    ctx.strokeStyle = event.target.value;
+    seectx.strokeStyle = event.target.value;
   // Use selectedColor to draw
 });
 
-canvas.addEventListener('pointerdown', (event) => {
+seeCanvas.addEventListener('pointerdown', (event) => {
   // Handle pen down event
-  console.log('Pen down:', event.clientX, event.clientY); 
+  console.log('Pen down:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
   isDrawing = true;
-  ctx.beginPath();
-  ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+  svgctx.beginPath();
+  svgctx.moveTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
+  seectx.beginPath();
+  seectx.moveTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
 });
 
-canvas.addEventListener('pointermove', (event) => {
+seeCanvas.addEventListener('pointermove', (event) => {
   if (event.pressure > 0) { // Check if pen is actively drawing
     // Handle pen movement event
-    console.log('Pen move:', event.clientX, event.clientY); 
+    console.log('Pen move:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
     if (!isDrawing) return;
 
-    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-    ctx.stroke();
+    svgctx.lineTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
+    svgctx.stroke();
+    seectx.lineTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
+    seectx.stroke();
   }
 });
 
-canvas.addEventListener('pointerup', (event) => {
+seeCanvas.addEventListener('pointerup', (event) => {
   // Handle pen up event
-  console.log('Pen up:', event.clientX, event.clientY); 
+  console.log('Pen up:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
   isDrawing = false;
 });
 
@@ -44,6 +52,16 @@ document.getElementById("submit").addEventListener('click', submit);
 document.getElementById("drawReset").addEventListener('click', drawReset);
 document.getElementById("kanjiReset").addEventListener('click', kanjiReset);
 
+// returns the offset of an element in relation to the webpage. This is needed for the canvases, although it seems to be relative position and doesn't work properly if the page is scrollable, which I need to fix later.
+function getOffset(element) {
+  const rect = element.getBoundingClientRect();
+  return {
+    left: rect.left + window.scrollX,
+    top: rect.top + window.scrollY
+  };
+}
+
+// this just grabs a random kanji right now, it's bad and will be addressed at...some point
 function init(filename) {
   fetch(filename)
     .then(checkResult)
@@ -66,6 +84,7 @@ function listKanji(text) {
   console.log(files[random]);
 }
 
+// sets the html displayed image to the chosen kanji
 function displayKanji(file) {
   document.getElementById('myKanji').src=file;
   console.log(file);
@@ -79,11 +98,12 @@ function kanjiReset() {
 
 function drawReset() {
     console.log('reset drawing');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    svgctx.clearRect(0, 0, svgCanvas.width, svgCanvas.height);
+    seectx.clearRect(0, 0, seeCanvas.width, seeCanvas.height);
 }
 
 function submit() {
-    const svg = ctx.getSerializedSvg();
+    const svg = svgctx.getSerializedSvg();
     let filename = drawNum + ".svg"
     const link = document.createElement('a');
     link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
@@ -96,33 +116,7 @@ function submit() {
     
 }
 
-// function dataURLtoBlob(dataurl) {
-//     const arr = dataurl.split(',');
-//     const mime = arr[0].match(/:(.*?);/)[1];
-//     const bstr = atob(arr[1]); 
-//     let n = bstr.length;
-//     const u8arr = new Uint8Array(n);
-  
-//     while(n--){
-//       u8arr[n] = bstr.charCodeAt(n);
-//     }
-  
-//     return new Blob([u8arr], {type: mime});
-// }
 
-// function saveData(dataurl, filename) {
-//     const blob = dataURLtoBlob(dataurl);
-//     const url = window.URL.createObjectURL(blob);
-  
-//     const link = document.createElement('a');
-//     link.href = url;
-//     console.log('Filename is ' + filename)
-//     link.setAttribute('download', filename);
-  
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-// }
 
 
 
