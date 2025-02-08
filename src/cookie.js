@@ -11,6 +11,8 @@ let isDrawing = false;
 svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
 let drawNum = 1;
+let strokes = 0;
+let exStrokes = 0;
 init('list.txt')
 
 
@@ -46,6 +48,8 @@ seeCanvas.addEventListener('pointerup', (event) => {
   // Handle pen up event
   console.log('Pen up:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
   isDrawing = false;
+  strokes++;
+  document.getElementById("usStrokes").innerHTML = strokes;
 });
 
 document.getElementById("submit").addEventListener('click', submit);
@@ -65,7 +69,8 @@ function getOffset(element) {
 function init(filename) {
   fetch(filename)
     .then(checkResult)
-    .then(listKanji);
+    .then(listKanji);    
+  drawReset();
 }
 
 function checkResult(response) {
@@ -81,6 +86,8 @@ function listKanji(text) {
   console.log(files);
   let random = Math.floor(Math.random() * files.length)
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
+  exStrokes = files[random].at(-5);
+  document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(files[random]);
 }
 
@@ -100,9 +107,15 @@ function drawReset() {
     console.log('reset drawing');
     svgctx.clearRect(0, 0, svgCanvas.width, svgCanvas.height);
     seectx.clearRect(0, 0, seeCanvas.width, seeCanvas.height);
+    strokes = 0;
+    document.getElementById("usStrokes").innerHTML = strokes
+    document.getElementById("result").innerHTML = "currently drawing...";
 }
 
 function submit() {
+    if(strokes == exStrokes) {
+      document.getElementById("result").innerHTML = "Stroke count matched!";
+    } else document.getElementById("result").innerHTML = "Stroke count incorrect."
     const svg = svgctx.getSerializedSvg();
     let filename = drawNum + ".svg"
     const link = document.createElement('a');
