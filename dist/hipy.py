@@ -11,6 +11,12 @@ def dbconnect():
     )   
     return mydb
 
+def sendResponse (json_object):
+    print("Status: 200 OK")
+    print("Content-type: application/json")
+    print()
+    print(json.dumps(json_object))
+
 def purge(mydb):
     my_cursor = mydb.cursor()
     my_cursor.execute("DELETE FROM kanji_strokes.allKanjiStrokes;")
@@ -23,11 +29,24 @@ def insert(mydb):
 def show(mydb):
     my_cursor = mydb.cursor()
     my_cursor.execute("SELECT * FROM kanji_strokes.allKanjiStrokes;")
-    results = my_cursor.fetchall()
-    print(results)
+    records = my_cursor.fetchall()
+    result = {}
+    for record in records:
+        result[record[0]] = record[1]
+    return result
+
+def upload(mydb):
+    my_cursor = mydb.cursor()
+    my_sql = f"INSERT INTO kanji_strokes.inputs (userInputs) VALUES ('1');"
+    my_cursor.execute(my_sql)
+    mydb.commit()
+    #return value
                                 
 mydb = dbconnect()
-purge(mydb)
-insert(mydb)
-mydb.commit()
-show(mydb)
+upload(mydb)
+request = json.load(sys.stdin)
+if request['action'] == "upload":
+    result = upload(mydb, request['state'])
+else:    
+    result = show(mydb)
+sendResponse(result)

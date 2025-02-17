@@ -27,19 +27,19 @@ colorPicker.addEventListener('change', (event) => {
   // Use selectedColor to draw
 });
 
-seeCanvas.addEventListener('pointerdown', (event) => {
+function startDrawing(clientX, clientY) {
   // Handle pen down event
-  console.log('Pen down:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
+  console.log('Pen down:', clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top); 
   isDrawing = true;
   svgctx.beginPath();
-  svgctx.moveTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
+  svgctx.moveTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
   seectx.beginPath();
-  seectx.moveTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
-  xArr.push(event.clientX - getOffset(seeCanvas).left);
-  yArr.push(event.clientY - getOffset(seeCanvas).top);
-});
+  seectx.moveTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
+  xArr.push(clientX - getOffset(seeCanvas).left);
+  yArr.push(clientY - getOffset(seeCanvas).top);
+}
 
-seeCanvas.addEventListener('pointermove', (event) => {
+function draw(event) {
   if (event.pressure > 0) { // Check if pen is actively drawing
     // Handle pen movement event
     console.log('Pen move:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
@@ -52,10 +52,13 @@ seeCanvas.addEventListener('pointermove', (event) => {
     xArr.push(event.clientX - getOffset(seeCanvas).left);
     yArr.push(event.clientY - getOffset(seeCanvas).top);
   }
-});
+}
 
-seeCanvas.addEventListener('pointerup', (event) => {
+
+
+function stopDrawing(event) {
   // Handle pen up event
+  if(!isDrawing) return;
   console.log('Pen up:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
   isDrawing = false;
   strokes++;
@@ -88,11 +91,23 @@ seeCanvas.addEventListener('pointerup', (event) => {
 
   xArr = [];
   yArr = [];
+}
 
-  // strokeList.forEach((coordinate, index) => {
-  //   console.log(`Coordinate ${index + 1}: (${coordinate[0]}, ${coordinate[1]})`);
-  // })
-});
+seeCanvas.addEventListener('pointerdown', function (event) {
+  startDrawing(event.clientX, event.clientY)
+}, false);
+seeCanvas.addEventListener('pointermove', draw);
+seeCanvas.addEventListener('pointerup', stopDrawing);
+seeCanvas.addEventListener('mouseout', stopDrawing);
+
+seeCanvas.addEventListener('touchstart', function (event) {
+  event.preventDefault()
+  let clientX = e.touches[0].clientX;
+  let clientY = e.touches[0].clientY; 
+  startDrawing(clientX, clientY)
+}, false);
+seeCanvas.addEventListener('touchmove', draw);
+seeCanvas.addEventListener('touchend', stopDrawing);
 
 document.getElementById("login").addEventListener('click', login);
 document.getElementById("submit").addEventListener('click', submit);
@@ -181,8 +196,22 @@ function submit() {
     //let dataURL = canvas.toDataURL(filename)
     //saveData(dataURL, filename)
     console.log('Saved data ' + filename)
+    upload(text);
     drawNum++;
     
+}
+
+function upload(text) {
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
+  fetch(request)
+      .then(function(response) {
+          if(response.ok) {
+              return response.json();
+          }
+      })
+  .then(function(response_json) {
+      console.log(response_json);
+  });
 }
 
 // function to find chains in the given array and returns the indices of those chains
@@ -230,13 +259,3 @@ function combineUniqueArrays(arr1, arr2) {
   unique.sort((x, y) => y - x); // sort uses an alphabetical sort, so a comparison function is needed for a numerical sort. This will sort in descending order so array indices can be removed in reverse order to avoid index mismatches
   return unique;
 }
-
-
-
-
-
-
-
-
-
-
