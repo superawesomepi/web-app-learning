@@ -7,6 +7,9 @@ const svgctx = new C2S({ width: svgCanvas.width, height: svgCanvas.height }); //
 const seectx = seeCanvas.getContext("2d");
 
 
+let expectedStrokeString = "105,142.0333251953125,107,142.0333251953125,109,142.0333251953125,111,142.0333251953125,113,142.0333251953125,114,141.0333251953125,116,141.0333251953125,118,141.0333251953125,120,141.0333251953125,122,141.0333251953125,124,141.0333251953125,126,141.0333251953125,128,141.0333251953125,130,141.0333251953125,132,141.0333251953125,134,141.0333251953125,136,141.0333251953125,138,141.0333251953125,140,141.0333251953125,142,141.0333251953125,144,141.0333251953125,146,141.0333251953125,149,141.0333251953125,151,141.0333251953125,155,141.0333251953125,157,141.0333251953125,159,141.0333251953125,162,141.0333251953125,165,142.0333251953125,168,142.0333251953125,173,142.0333251953125,177,142.0333251953125,182,142.0333251953125,185,142.0333251953125,187,142.0333251953125,189,142.0333251953125,192,142.0333251953125,196,142.0333251953125,200,143.0333251953125,203,143.0333251953125,206,143.0333251953125,208,143.0333251953125,210,143.0333251953125,212,143.0333251953125,214,143.0333251953125,216,143.0333251953125,219,143.0333251953125,223,143.0333251953125,226,143.0333251953125,229,143.0333251953125,231,143.0333251953125,233,143.0333251953125,235,143.0333251953125,237,143.0333251953125,240,143.0333251953125,243,143.0333251953125,246,143.0333251953125,248,143.0333251953125,250,143.0333251953125,252,143.0333251953125,254,143.0333251953125,256,142.0333251953125,258,142.0333251953125,260,142.0333251953125";
+let expectedCoordinates = [];
+let correctness = 100;
 let isDrawing = false;
 svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
@@ -39,19 +42,17 @@ function startDrawing(clientX, clientY) {
   yArr.push(clientY - getOffset(seeCanvas).top);
 }
 
-function draw(event) {
-  if (event.pressure > 0) { // Check if pen is actively drawing
-    // Handle pen movement event
-    console.log('Pen move:', event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top); 
-    if (!isDrawing) return;
+function draw(clientX, clientY) {
+  // Handle pen movement event
+  console.log('Pen move:', clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top); 
+  if (!isDrawing) return;
 
-    svgctx.lineTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
-    svgctx.stroke();
-    seectx.lineTo(event.clientX - getOffset(seeCanvas).left, event.clientY - getOffset(seeCanvas).top);
-    seectx.stroke();
-    xArr.push(event.clientX - getOffset(seeCanvas).left);
-    yArr.push(event.clientY - getOffset(seeCanvas).top);
-  }
+  svgctx.lineTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
+  svgctx.stroke();
+  seectx.lineTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
+  seectx.stroke();
+  xArr.push(clientX - getOffset(seeCanvas).left);
+  yArr.push(clientY - getOffset(seeCanvas).top);
 }
 
 
@@ -87,8 +88,19 @@ function stopDrawing(event) {
   strokeList.push(coordinates);
   console.log("added stroke " + strokes + " to the save data");
   console.log(strokeList);
+  
+  let exStart = expectedCoordinates[0];
+  let exEnd = expectedCoordinates[expectedCoordinates.length-1];
+  let usStart = coordinates[0];
+  let usEnd = coordinates[coordinates.length-1];
+  document.getElementById("pointMatching").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
+  let xMatch = Math.abs(exStart[0]-usStart[0]) + Math.abs(exEnd[0]-usEnd[0]);
+  let yMatch = Math.abs(exStart[1]-usStart[1]) + Math.abs(exEnd[1]-usEnd[1]);
+  if(xMatch+yMatch < correctness) {
+    document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Correct with a precision of " + correctness;
+  } else document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Incorrect with a precision of " + correctness;
+  
   coordinates = [];
-
   xArr = [];
   yArr = [];
 }
@@ -96,17 +108,31 @@ function stopDrawing(event) {
 seeCanvas.addEventListener('pointerdown', function (event) {
   startDrawing(event.clientX, event.clientY)
 }, false);
-seeCanvas.addEventListener('pointermove', draw);
+seeCanvas.addEventListener('pointermove', function (event) {
+  if (event.pressure > 0) { // Check if pen is actively drawing
+    draw(event.clientX, event.clientY);
+  }
+}, false);
+
 seeCanvas.addEventListener('pointerup', stopDrawing);
 seeCanvas.addEventListener('mouseout', stopDrawing);
 
 seeCanvas.addEventListener('touchstart', function (event) {
+  console.log("finger touchie the screen woo");
   event.preventDefault()
-  let clientX = e.touches[0].clientX;
-  let clientY = e.touches[0].clientY; 
+  let clientX = event.touches[0].clientX;
+  let clientY = event.touches[0].clientY; 
   startDrawing(clientX, clientY)
 }, false);
-seeCanvas.addEventListener('touchmove', draw);
+seeCanvas.addEventListener('touchmove', function (event) {
+  if (event.pressure > 0) { // Check if pen is actively drawing 
+    console.log("finger movie the screen woo");
+    event.preventDefault()
+    let clientX = event.touches[0].clientX;
+    let clientY = event.touches[0].clientY; 
+    draw(clientX, clientY)
+  }
+}, false);
 seeCanvas.addEventListener('touchend', stopDrawing);
 
 document.getElementById("login").addEventListener('click', login);
@@ -129,6 +155,7 @@ function init(filename) {
     .then(checkResult)
     .then(listKanji);    
   drawReset();
+  setCoordinates();
 }
 
 function checkResult(response) {
@@ -143,6 +170,7 @@ function listKanji(text) {
   const files = text.split('\n');
   console.log(files);
   let random = Math.floor(Math.random() * files.length)
+  random = 0; // test line for straight line, remove later
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
   exStrokes = files[random].at(-5);
   document.getElementById("exStrokes").innerHTML = exStrokes;
@@ -170,6 +198,17 @@ function drawReset() {
     strokeList = [];
     document.getElementById("usStrokes").innerHTML = strokes
     document.getElementById("result").innerHTML = "currently drawing...";
+    document.getElementById("pointMatching").innerHTML = "waiting...";
+    document.getElementById("pointCheck").innerHTML = "waiting...";
+}
+
+function setCoordinates() {
+  const coords = expectedStrokeString.split(',');
+  console.log(coords);
+  for(let i = 0; i < coords.length; i+=2) {
+    expectedCoordinates[i/2] = [coords[i], coords[i+1]];
+  }
+  console.log(expectedCoordinates);
 }
 
 function login() {
@@ -202,7 +241,8 @@ function submit() {
 }
 
 function upload(text) {
-  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
+  //const request = new Request('python_test.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
+  const request = new Request('python_test.py', {method: 'POST'});
   fetch(request)
       .then(function(response) {
           if(response.ok) {
