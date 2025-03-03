@@ -6,9 +6,9 @@ const colorPicker = document.getElementById('colorPicker');
 const svgctx = new C2S({ width: svgCanvas.width, height: svgCanvas.height }); // get the canvas object from html, and set it to use C2S
 const seectx = seeCanvas.getContext("2d");
 
-
-let expectedStrokeString = "105,142.0333251953125,107,142.0333251953125,109,142.0333251953125,111,142.0333251953125,113,142.0333251953125,114,141.0333251953125,116,141.0333251953125,118,141.0333251953125,120,141.0333251953125,122,141.0333251953125,124,141.0333251953125,126,141.0333251953125,128,141.0333251953125,130,141.0333251953125,132,141.0333251953125,134,141.0333251953125,136,141.0333251953125,138,141.0333251953125,140,141.0333251953125,142,141.0333251953125,144,141.0333251953125,146,141.0333251953125,149,141.0333251953125,151,141.0333251953125,155,141.0333251953125,157,141.0333251953125,159,141.0333251953125,162,141.0333251953125,165,142.0333251953125,168,142.0333251953125,173,142.0333251953125,177,142.0333251953125,182,142.0333251953125,185,142.0333251953125,187,142.0333251953125,189,142.0333251953125,192,142.0333251953125,196,142.0333251953125,200,143.0333251953125,203,143.0333251953125,206,143.0333251953125,208,143.0333251953125,210,143.0333251953125,212,143.0333251953125,214,143.0333251953125,216,143.0333251953125,219,143.0333251953125,223,143.0333251953125,226,143.0333251953125,229,143.0333251953125,231,143.0333251953125,233,143.0333251953125,235,143.0333251953125,237,143.0333251953125,240,143.0333251953125,243,143.0333251953125,246,143.0333251953125,248,143.0333251953125,250,143.0333251953125,252,143.0333251953125,254,143.0333251953125,256,142.0333251953125,258,142.0333251953125,260,142.0333251953125";
+let expectedStrokeString = "";
 let expectedCoordinates = [];
+let strokeCoordinates = []
 let correctness = 100;
 let isDrawing = false;
 svgctx.lineWidth = 10;
@@ -22,7 +22,23 @@ let xArr = [];
 let yArr = [];
 let coordinates = []
 let strokeList = [];
-init('list.txt')
+console.log("fetching kanji from db");
+//let expectedStrokeString = fetchKanji();
+fetchKanji().then(processStrokeArray);
+
+function processStrokeArray (expectedStrokeArray) {
+  expectedStrokeString = expectedStrokeArray.toString();
+  console.log("fetched kanji from db");
+  console.log(expectedStrokeString);
+  console.log("loading");
+  
+  init('list.txt')
+  
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
 colorPicker.addEventListener('change', (event) => {
@@ -93,12 +109,12 @@ function stopDrawing(event) {
   let exEnd = expectedCoordinates[expectedCoordinates.length-1];
   let usStart = coordinates[0];
   let usEnd = coordinates[coordinates.length-1];
-  document.getElementById("pointMatching").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
+  //document.getElementById("pointMatching").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
   let xMatch = Math.abs(exStart[0]-usStart[0]) + Math.abs(exEnd[0]-usEnd[0]);
   let yMatch = Math.abs(exStart[1]-usStart[1]) + Math.abs(exEnd[1]-usEnd[1]);
-  if(xMatch+yMatch < correctness) {
-    document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Correct with a precision of " + correctness;
-  } else document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Incorrect with a precision of " + correctness;
+  //if(xMatch+yMatch < correctness) {
+    //document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Correct with a precision of " + correctness;
+  //} else document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Incorrect with a precision of " + correctness;
   
   coordinates = [];
   xArr = [];
@@ -170,9 +186,8 @@ function listKanji(text) {
   const files = text.split('\n');
   console.log(files);
   let random = Math.floor(Math.random() * files.length)
-  random = 0; // test line for straight line, remove later
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
-  exStrokes = files[random].at(-5);
+  exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
   document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(files[random]);
   kanjiName = files[random].substring(0, files[random].indexOf("_"));
@@ -198,17 +213,23 @@ function drawReset() {
     strokeList = [];
     document.getElementById("usStrokes").innerHTML = strokes
     document.getElementById("result").innerHTML = "currently drawing...";
-    document.getElementById("pointMatching").innerHTML = "waiting...";
-    document.getElementById("pointCheck").innerHTML = "waiting...";
+    //document.getElementById("pointMatching").innerHTML = "waiting...";
+    //document.getElementById("pointCheck").innerHTML = "waiting...";
 }
 
 function setCoordinates() {
-  const coords = expectedStrokeString.split(',');
-  console.log(coords);
-  for(let i = 0; i < coords.length; i+=2) {
-    expectedCoordinates[i/2] = [coords[i], coords[i+1]];
+  expectedStrokeString.replace("\n", "");
+  strokeList = expectedStrokeString.substring(9, expectedStrokeString.length-1).split("<stroke> ");
+  for (let i = 0; i < strokeList.length; i++) {
+    const coords = strokeList[i].split(',');
+    console.log(coords);
+    for(let i = 0; i < coords.length; i+=2) {
+      expectedCoordinates[i/2] = [coords[i], coords[i+1]];
+    }
+    console.log(expectedCoordinates);
+    strokeCoordinates.push(expectedCoordinates);
   }
-  console.log(expectedCoordinates);
+  console.log(strokeCoordinates);
 }
 
 function login() {
@@ -241,8 +262,7 @@ function submit() {
 }
 
 function upload(text) {
-  //const request = new Request('python_test.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
-  const request = new Request('python_test.py', {method: 'POST'});
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
   fetch(request)
       .then(function(response) {
           if(response.ok) {
@@ -252,6 +272,21 @@ function upload(text) {
   .then(function(response_json) {
       console.log(response_json);
   });
+}
+
+function fetchKanji() {
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "fetch"}'});
+  //const request = new Request('hipy.py', {method: 'POST'});
+  return fetch(request)
+    .then(function(response) {
+      if(response.ok) {
+        return response.json();
+      }
+    })
+    .then(function(response_json) {
+      console.log(response_json);
+      return response_json;
+    });
 }
 
 // function to find chains in the given array and returns the indices of those chains

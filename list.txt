@@ -1,4 +1,3 @@
-line_1.svg
 1_1.svg
 2_2.svg
 3_3.svg

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/home/kastpradmin/kastpr.craggypeak.com/venv/bin/python3
 
 import mysql.connector
 import json
@@ -37,18 +37,28 @@ def show(mydb):
         result[record[0]] = record[1]
     return result
 
-def upload(mydb):
+def upload(mydb, insert):
     my_cursor = mydb.cursor()
-    my_sql = f"INSERT INTO kanji_strokes.inputs (userInputs) VALUES ('1');"
+    my_sql = f"INSERT INTO kanji_strokes.inputs (userInputs) VALUES ('{insert}');"
     my_cursor.execute(my_sql)
     mydb.commit()
-    #return value
+    return insert
+
+def fetch(mydb, kanjiName):
+    my_cursor = mydb.cursor()
+    my_sql = f"SELECT kanjiValue FROM kanji_strokes.sourceKanji WHERE kanjiName = \"{kanjiName}\";"
+    my_cursor.execute(my_sql)
+    return my_cursor.fetchall()
                                 
 mydb = dbconnect()
-upload(mydb)
+#upload(mydb)
+#result = fetch(mydb, "roku_4")
 request = json.load(sys.stdin)
 if request['action'] == "upload":
     result = upload(mydb, request['state'])
+elif request['action'] == "fetch":
+    result = fetch(mydb, "roku_4")
 else:    
     result = show(mydb)
+#sendResponse({"foo": "bar"})
 sendResponse(result)
