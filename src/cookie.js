@@ -10,6 +10,7 @@ let expectedStrokeString = "";
 let expectedCoordinates = [];
 let strokeCoordinates = []
 let correctness = 100;
+let accuracy = 0;
 let isDrawing = false;
 svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
@@ -105,16 +106,17 @@ function stopDrawing(event) {
   console.log("added stroke " + strokes + " to the save data");
   console.log(strokeList);
   
-  let exStart = expectedCoordinates[0];
-  let exEnd = expectedCoordinates[expectedCoordinates.length-1];
+  let exStart = strokeCoordinates[strokes-1][0];
+  let exEnd = strokeCoordinates[strokes-1][strokeCoordinates[strokes-1].length-1];
   let usStart = coordinates[0];
   let usEnd = coordinates[coordinates.length-1];
-  //document.getElementById("pointMatching").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
+  //document.getElementById("result").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
   let xMatch = Math.abs(exStart[0]-usStart[0]) + Math.abs(exEnd[0]-usEnd[0]);
   let yMatch = Math.abs(exStart[1]-usStart[1]) + Math.abs(exEnd[1]-usEnd[1]);
-  //if(xMatch+yMatch < correctness) {
-    //document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Correct with a precision of " + correctness;
-  //} else document.getElementById("pointCheck").innerHTML = "With a total x offset of " + xMatch + " and y offset of " + yMatch + ", this stroke is Incorrect with a precision of " + correctness;
+  if(xMatch+yMatch < correctness) {
+    document.getElementById("result").innerHTML = "Stroke correct";
+    accuracy++;
+  } else document.getElementById("result").innerHTML = "Stroke incorrect";
   
   coordinates = [];
   xArr = [];
@@ -172,6 +174,7 @@ function init(filename) {
     .then(listKanji);    
   drawReset();
   setCoordinates();
+  document.getElementById("username").value = "";
 }
 
 function checkResult(response) {
@@ -186,8 +189,9 @@ function listKanji(text) {
   const files = text.split('\n');
   console.log(files);
   let random = Math.floor(Math.random() * files.length)
+  random = 5;
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
-  exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
+  //exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
   document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(files[random]);
   kanjiName = files[random].substring(0, files[random].indexOf("_"));
@@ -217,11 +221,13 @@ function drawReset() {
     //document.getElementById("pointCheck").innerHTML = "waiting...";
 }
 
-function setCoordinates() {
+function setCoordinates() {;
+  strokeCoordinates = []
   expectedStrokeString.replace("\n", "");
-  strokeList = expectedStrokeString.substring(9, expectedStrokeString.length-1).split("<stroke> ");
-  for (let i = 0; i < strokeList.length; i++) {
-    const coords = strokeList[i].split(',');
+  let strokesList = expectedStrokeString.substring(9, expectedStrokeString.length-1).split("<stroke> ");
+  for (let i = 0; i < strokesList.length; i++) {
+    expectedCoordinates = [];
+    const coords = strokesList[i].split(',');
     console.log(coords);
     for(let i = 0; i < coords.length; i+=2) {
       expectedCoordinates[i/2] = [coords[i], coords[i+1]];
@@ -230,17 +236,21 @@ function setCoordinates() {
     strokeCoordinates.push(expectedCoordinates);
   }
   console.log(strokeCoordinates);
+  exStrokes = strokeCoordinates.length;
 }
 
 function login() {
   username = document.getElementById("username").value;
   console.log("Set username to " + username);
+  document.getElementById("curUser").innerHTML = username;
 }
 
 function submit() {
     if(strokes == exStrokes) {
-      document.getElementById("result").innerHTML = "Stroke count matched!";
+      document.getElementById("result").innerHTML = "Stroke count matched! Score of " + (accuracy/exStrokes)*100;
+      console.log(accuracy + ", " + exStrokes + ", " + (accuracy/exStrokes)*100)
     } else document.getElementById("result").innerHTML = "Stroke count incorrect."
+    accuracy = 0;
     //const svg = svgctx.getSerializedSvg();
     //let filename = drawNum + ".svg"
     let filename = username + "-" + kanjiName + ".txt"
