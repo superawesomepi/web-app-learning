@@ -6,11 +6,18 @@ const colorPicker = document.getElementById('colorPicker');
 const svgctx = new C2S({ width: svgCanvas.width, height: svgCanvas.height }); // get the canvas object from html, and set it to use C2S
 const seectx = seeCanvas.getContext("2d");
 
+let files = [];
+let select = document.getElementById("kanjiOptions");
 let expectedStrokeString = "";
 let expectedCoordinates = [];
 let strokeCoordinates = []
 let correctness = 100;
 let accuracy = 0;
+let userKanjiInfo = {
+  "username": "",
+  "kanjiName": "",
+  "kanjiData": ""
+}
 let isDrawing = false;
 svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
@@ -36,11 +43,6 @@ function processStrokeArray (expectedStrokeArray) {
   init('list.txt')
   
 }
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 
 colorPicker.addEventListener('change', (event) => {
     seectx.strokeStyle = event.target.value;
@@ -156,7 +158,7 @@ seeCanvas.addEventListener('touchend', stopDrawing);
 document.getElementById("login").addEventListener('click', login);
 document.getElementById("submit").addEventListener('click', submit);
 document.getElementById("drawReset").addEventListener('click', drawReset);
-document.getElementById("kanjiReset").addEventListener('click', kanjiReset);
+document.getElementById("kanjiSelect").addEventListener('click', kanjiSelect);
 
 // returns the offset of an element in relation to the webpage. This is needed for the canvases, although it seems to be relative position and doesn't work properly if the page is scrollable, which I need to fix later.
 function getOffset(element) {
@@ -171,7 +173,8 @@ function getOffset(element) {
 function init(filename) {
   fetch(filename)
     .then(checkResult)
-    .then(listKanji);    
+    .then(getRandKanji)
+    .then(setKanjiOptions);    
   drawReset();
   setCoordinates();
   document.getElementById("username").value = "";
@@ -185,16 +188,17 @@ function checkResult(response) {
   }
 }
 
-function listKanji(text) {
-  const files = text.split('\n');
+function getRandKanji(text) {
+  files = text.split('\n');
   console.log(files);
   let random = Math.floor(Math.random() * files.length)
   random = 5;
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
-  //exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
+  exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
   document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(files[random]);
   kanjiName = files[random].substring(0, files[random].indexOf("_"));
+  userKanjiInfo["kanjiName"] = kanjiName;
 }
 
 // sets the html displayed image to the chosen kanji
@@ -203,10 +207,21 @@ function displayKanji(file) {
   console.log(file);
 }
 
-function kanjiReset() {
+function kanjiSelect() {
     console.log('Getting new kanji');
     drawReset()
-    init('list.txt')
+    const selectedValue = select.value;
+    console.log("chose kanji " + selectedValue);
+    setNewKanji(selectedValue);
+}
+
+function setNewKanji(filename) {
+  document.getElementById('myKanji').src='complete_kanji/' + filename;
+  exStrokes = filename.substring(filename.indexOf("_")+1, filename.indexOf("."));
+  document.getElementById("exStrokes").innerHTML = exStrokes;
+  console.log(filename);
+  kanjiName = filename.substring(0, filename.indexOf("_"));
+  userKanjiInfo["kanjiName"] = kanjiName;
 }
 
 function drawReset() {
@@ -221,8 +236,8 @@ function drawReset() {
     //document.getElementById("pointCheck").innerHTML = "waiting...";
 }
 
-function setCoordinates() {;
-  strokeCoordinates = []
+function setCoordinates() {
+  strokeCoordinates = [];
   expectedStrokeString.replace("\n", "");
   let strokesList = expectedStrokeString.substring(9, expectedStrokeString.length-1).split("<stroke> ");
   for (let i = 0; i < strokesList.length; i++) {
@@ -239,10 +254,24 @@ function setCoordinates() {;
   exStrokes = strokeCoordinates.length;
 }
 
+function setKanjiOptions() {
+  select.innerHTML = "";
+  console.log("adding options for kanji selection");
+  for(let i = 0; i < files.length; i++) {
+    let option = files[i];
+    let el = document.createElement("option");
+    el.textContent = option;
+    el.value = option;
+    select.appendChild(el);
+    console.log("added " + el + " to dropdown options");
+  }
+}
+
 function login() {
   username = document.getElementById("username").value;
   console.log("Set username to " + username);
   document.getElementById("curUser").innerHTML = username;
+  userKanjiInfo["username"] = username
 }
 
 function submit() {
@@ -272,7 +301,8 @@ function submit() {
 }
 
 function upload(text) {
-  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(text)+'}'});
+  userKanjiInfo["kanjiData"] = text
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "upload", "state": '+JSON.stringify(userKanjiInfo)+'}'});
   fetch(request)
       .then(function(response) {
           if(response.ok) {

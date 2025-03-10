@@ -37,12 +37,15 @@ def show(mydb):
         result[record[0]] = record[1]
     return result
 
-def upload(mydb, insert):
+def upload(mydb, state):
     my_cursor = mydb.cursor()
-    my_sql = f"INSERT INTO kanji_strokes.inputs (userInputs) VALUES ('{insert}');"
+    dataList = []
+    for key,value in state.items():
+        dataList.append(value)
+    my_sql = f"INSERT INTO kanji_strokes.inputs VALUES (\"{dataList[0]}\", \"{dataList[1]}\", \"{dataList[2]}\");"
     my_cursor.execute(my_sql)
     mydb.commit()
-    return insert
+    return dataList
 
 def fetch(mydb, kanjiName):
     my_cursor = mydb.cursor()
