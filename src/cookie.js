@@ -377,17 +377,24 @@ function fetchKanji() {
 // }
 
 function scoreKanji(kanjiOne, kanjiTwo) {
+  console.log("scoring kanji");
+  console.log(kanjiOne);
+  console.log(kanjiTwo);
   // normalize the kanji using linear transformation 
   // normalize kanjiOne to 0,0 and get its x and y maximum
   let normalizedKanjiOne = [];
   let onexMax = 0;
   let oneyMax = 0;
   [normalizedKanjiOne, onexMax, oneyMax] = normalizeKanjiLinearly(kanjiOne);
+  console.log("normalized first kanji");
+  console.log(normalizedKanjiOne);
   // normalize kanjiTwo to 0,0 and get its x and y maximum
   let normalizedKanjiTwo = [];
   let twoxMax = 0;
   let twoyMax = 0;
   [normalizedKanjiTwo, twoxMax, twoyMax] = normalizeKanjiLinearly(kanjiTwo);
+  console.log("normalized second kanji");
+  console.log(normalizedKanjiTwo);
 
   // normalize kanjiTwo to kanjiOne using scaling transformation
   let xScaleFactor = twoxMax/onexMax;
@@ -434,7 +441,7 @@ function normalizeKanjiLinearly(kanjiCoords) {
   let yMin = 1000;
   let xMax = 0;
   let yMax = 0;
-  shiftedArray = kanjiCoords;
+  let shiftedArray = JSON.parse(JSON.stringify(kanjiCoords)); // this is so dumb but apparently it avoids aliasing so yay
   // gets the smallest x and y coordinates from the entire kanji
   kanjiCoords.forEach(strokeArr => { // split kanji into strokes
     strokeArr.forEach(pointArr => { // split strokes into points
