@@ -10,7 +10,7 @@ let files = [];
 let select = document.getElementById("kanjiOptions");
 let expectedStrokeString = "";
 let expectedCoordinates = [];
-let strokeCoordinates = []
+let strokeCoordinates = [];
 let correctness = 100;
 let accuracy = 0;
 let userKanjiInfo = {
@@ -87,22 +87,22 @@ function stopDrawing(event) {
   yArr.push(event.clientY - getOffset(seeCanvas).top);
   console.log(xArr);
   console.log(yArr);
-  let xChains = findChains(xArr);
-  let yChains = findChains(yArr);
-  console.log("x: " + xChains);
-  console.log("y: " + yChains);
+  //let xChains = findChains(xArr);
+  //let yChains = findChains(yArr);
+  //console.log("x: " + xChains);
+  //console.log("y: " + yChains);
   // flatten the arrays
-  xChains = [].concat(...xChains);
-  yChains = [].concat(...yChains);
-  let removeIndices = combineUniqueArrays(xChains, yChains);
-  console.log("chains: " + removeIndices);
+  //xChains = [].concat(...xChains);
+  //yChains = [].concat(...yChains);
+  //let removeIndices = combineUniqueArrays(xChains, yChains);
+  //console.log("chains: " + removeIndices);
   for (var i = 0; i < xArr.length; i++) {
     coordinates[i] = [xArr[i], yArr[i]];
   }
   console.log("Total coordinates " + coordinates);
-  for(const index in removeIndices) {
-    coordinates.splice(index, 1);
-  }
+  //for(const index in removeIndices) {
+    //coordinates.splice(index, 1);
+  //}
   console.log("Coordinates remaining: " + coordinates);
   strokeList.push(coordinates);
   console.log("added stroke " + strokes + " to the save data");
@@ -295,6 +295,7 @@ function submit() {
     //let dataURL = canvas.toDataURL(filename)
     //saveData(dataURL, filename)
     console.log('Saved data ' + filename)
+    scoreKanji(strokeCoordinates, strokeList);
     upload(text);
     drawNum++;
     
@@ -330,47 +331,129 @@ function fetchKanji() {
 }
 
 // function to find chains in the given array and returns the indices of those chains
-function findChains(arr) {
-  const chains = [];
-  let currentChain = [];
+// function findChains(arr) {
+//   const chains = [];
+//   let currentChain = [];
 
-  for (let i = 0; i < arr.length; i++) {
-    if (i === 0 || arr[i] === arr[i - 1]) { // is there a chain? tests if current val is same as previous, or if 0 to avoid index -1
-      currentChain.push(i);
-    } else {
-      if (currentChain.length > 2) { // if the current number is not the same as the previous, check if the chain is longer than 1, then it's a chain so push it to the chains array. Given this, we also don't want to consider pushing a chain unless it is at least 3 elements, instead of 2
-        // it's worth considering that we may want to maintain the first and last elements in a chain to avoid significant breaks in coordinate data
-        currentChain.splice(0, 1); // remove the first element
-        currentChain.splice(currentChain.length-1, 1); // remove the last element
-        console.log("Adding chain: " + currentChain);
-        chains.push(currentChain);
-      }
-      currentChain = [i]; // update starting index
-    }
+//   for (let i = 0; i < arr.length; i++) {
+//     if (i === 0 || arr[i] === arr[i - 1]) { // is there a chain? tests if current val is same as previous, or if 0 to avoid index -1
+//       currentChain.push(i);
+//     } else {
+//       if (currentChain.length > 2) { // if the current number is not the same as the previous, check if the chain is longer than 1, then it's a chain so push it to the chains array. Given this, we also don't want to consider pushing a chain unless it is at least 3 elements, instead of 2
+//         // it's worth considering that we may want to maintain the first and last elements in a chain to avoid significant breaks in coordinate data
+//         currentChain.splice(0, 1); // remove the first element
+//         currentChain.splice(currentChain.length-1, 1); // remove the last element
+//         console.log("Adding chain: " + currentChain);
+//         chains.push(currentChain);
+//       }
+//       currentChain = [i]; // update starting index
+//     }
+//   }
+
+//   if (currentChain.length > 2) { // if there is a chain at the end, pushes that also
+//     currentChain.splice(0, 1); // remove the first element
+//     currentChain.splice(currentChain.length-1, 1); // remove the last element
+//     console.log("Adding chain: " + currentChain);
+//     chains.push(currentChain);
+//   }
+
+//   return chains;
+// }
+
+// function combineUniqueArrays(arr1, arr2) {
+//   const combined = [...arr1, ...arr2];
+//   console.log("combined array of removeables is " + combined);
+//   const unique = [];
+
+//   for (const item of combined) {
+//     console.log("checking if " + item + " is present")
+//     if (!unique.includes(item)) {
+//       console.log("did not find " + item + ", adding it")
+//       unique.push(item);
+//     }
+//   }
+//   unique.sort((x, y) => y - x); // sort uses an alphabetical sort, so a comparison function is needed for a numerical sort. This will sort in descending order so array indices can be removed in reverse order to avoid index mismatches
+//   return unique;
+// }
+
+function scoreKanji(kanjiOne, kanjiTwo) {
+  // normalize the kanji using linear transformation 
+  // normalize kanjiOne to 0,0 and get its x and y maximum
+  let normalizedKanjiOne = [];
+  let onexMax = 0;
+  let oneyMax = 0;
+  [normalizedKanjiOne, onexMax, oneyMax] = normalizeKanjiLinearly(kanjiOne);
+  // normalize kanjiTwo to 0,0 and get its x and y maximum
+  let normalizedKanjiTwo = [];
+  let twoxMax = 0;
+  let twoyMax = 0;
+  [normalizedKanjiTwo, twoxMax, twoyMax] = normalizeKanjiLinearly(kanjiTwo);
+
+  // normalize kanjiTwo to kanjiOne using scaling transformation
+  let xScaleFactor = twoxMax/onexMax;
+  let yScaleFactor = twoyMax/oneyMax;
+  normalizedKanjiTwo.forEach(strokeArr => { // split kanji into strokes
+    strokeArr.forEach(pointArr => { // split strokes into points
+      pointArr[0] /= xScaleFactor; // subtract xMin and yMin from each point to normalize the kanji to 0,0
+      pointArr[1] /= yScaleFactor;
+    })
+  })
+  let score = compareKanji(normalizedKanjiOne, normalizedKanjiTwo);
+  console.log("converting kanji to text");
+  let textK1 = "";
+  for (let i = 0; i < kanjiOne.length; i++) {
+    textK1 = textK1 + "<stroke> " + kanjiOne[i] + "\n";
   }
-
-  if (currentChain.length > 2) { // if there is a chain at the end, pushes that also
-    currentChain.splice(0, 1); // remove the first element
-    currentChain.splice(currentChain.length-1, 1); // remove the last element
-    console.log("Adding chain: " + currentChain);
-    chains.push(currentChain);
+  let textK2 = "";
+  for (let i = 0; i < kanjiTwo.length; i++) {
+    textK2 = textK2 + "<stroke> " + kanjiTwo[i] + "\n";
   }
-
-  return chains;
+  let textKN1 = "";
+  for (let i = 0; i < normalizedKanjiOne.length; i++) {
+    textKN1 = textKN1 + "<stroke> " + normalizedKanjiOne[i] + "\n";
+  }
+  let textKN2 = "";
+  for (let i = 0; i < normalizedKanjiTwo.length; i++) {
+    textKN2 = textKN2 + "<stroke> " + normalizedKanjiTwo[i] + "\n";
+  }
+  
+  console.log("Here are the original kanji data");
+  console.log(textK1);
+  console.log(textK2);
+  console.log("and here are the normalized kanji data");
+  console.log(textKN1);
+  console.log(textKN2);
 }
 
-function combineUniqueArrays(arr1, arr2) {
-  const combined = [...arr1, ...arr2];
-  console.log("combined array of removeables is " + combined);
-  const unique = [];
+// this function takes in the expected kanji data, normalizes it to the top left, and returns that, plus the new max x and y coords
+// technically I could save it as such in the db, and maybe I will later for efficiency, but for now I want to keep the original data
+function normalizeKanjiLinearly(kanjiCoords) {
+  let xShift = 0;
+  let yShift = 0;
+  let xMin = 1000; // this will never be larger than canvas size so it really doesn't need to be too big
+  let yMin = 1000;
+  let xMax = 0;
+  let yMax = 0;
+  shiftedArray = kanjiCoords;
+  // gets the smallest x and y coordinates from the entire kanji
+  kanjiCoords.forEach(strokeArr => { // split kanji into strokes
+    strokeArr.forEach(pointArr => { // split strokes into points
+      if(pointArr[0] < xMin) xMin = pointArr[0]; // check if the x and y coords are the lowest in the kanji
+      if(pointArr[1] < yMin) yMin = pointArr[1];
+    })
+  })
+  // normalize all coordinates to 0,0 by subtracting those minimums
+  shiftedArray.forEach(strokeArr => { // split kanji into strokes
+    strokeArr.forEach(pointArr => { // split strokes into points
+      pointArr[0] -= xMin; // subtract xMin and yMin from each point to normalize the kanji to 0,0
+      pointArr[1] -= yMin;
+      if(pointArr[0] > xMax) xMax = pointArr[0];
+      if(pointArr[1] > yMax) yMax = pointArr[1]; 
+    })
+  })
+  return [shiftedArray, xMax, xMin];
+}
 
-  for (const item of combined) {
-    console.log("checking if " + item + " is present")
-    if (!unique.includes(item)) {
-      console.log("did not find " + item + ", adding it")
-      unique.push(item);
-    }
-  }
-  unique.sort((x, y) => y - x); // sort uses an alphabetical sort, so a comparison function is needed for a numerical sort. This will sort in descending order so array indices can be removed in reverse order to avoid index mismatches
-  return unique;
+function compareKanji(kanjiOne, kanjiTwo) {
+  return 0; 
 }
