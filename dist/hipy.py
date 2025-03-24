@@ -3,6 +3,7 @@
 import mysql.connector
 import json
 import sys
+from random import randrange
 
 def dbconnect():
     mydb = mysql.connector.connect(
@@ -52,6 +53,17 @@ def fetch(mydb, kanjiName):
     my_sql = f"SELECT kanjiValue FROM kanji_strokes.sourceKanji WHERE kanjiName = \"{kanjiName}\";"
     my_cursor.execute(my_sql)
     return my_cursor.fetchall()
+
+def grade(mydb, state):
+    my_cursor = mydb.cursor()
+    dataList = []
+    for key,value in state.items():
+        dataList.append(value)
+    firstKanji = dataList[0]
+    secondKanji = dataList[1]
+    # now we can compare the two kanji
+
+    return randrange(100)
                                 
 mydb = dbconnect()
 #upload(mydb)
@@ -61,6 +73,8 @@ if request['action'] == "upload":
     result = upload(mydb, request['state'])
 elif request['action'] == "fetch":
     result = fetch(mydb, "roku_4")
+elif request['action'] == "grade":
+    result = grade(mydb, request['state'])
 else:    
     result = show(mydb)
 #sendResponse({"foo": "bar"})

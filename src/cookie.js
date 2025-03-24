@@ -18,6 +18,10 @@ let userKanjiInfo = {
   "kanjiName": "",
   "kanjiData": ""
 }
+let kanjiComparison = {
+  "baseKanji": [],
+  "userKanji": []
+}
 let isDrawing = false;
 svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
@@ -317,7 +321,20 @@ function upload(text) {
 
 function fetchKanji() {
   const request = new Request('hipy.py', {method: 'POST', body: '{"action": "fetch"}'});
-  //const request = new Request('hipy.py', {method: 'POST'});
+  return fetch(request)
+    .then(function(response) {
+      if(response.ok) {
+        return response.json();
+      }
+    })
+    .then(function(response_json) {
+      console.log(response_json);
+      return response_json;
+    });
+}
+
+function gradeKanji() {
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "grade", "state": '+JSON.stringify(kanjiComparison)+'}'});
   return fetch(request)
     .then(function(response) {
       if(response.ok) {
@@ -377,6 +394,19 @@ function fetchKanji() {
 // }
 
 function scoreKanji(kanjiOne, kanjiTwo) {
+  // it's possible there's some nonsense going on with float comparisons, so I'm going to turn everything into an int
+  kanjiOne.forEach(strokeArr => { // split kanji into strokes
+    strokeArr.forEach(pointArr => { // split strokes into points
+      pointArr[0] = Math.round(pointArr[0]); // subtract xMin and yMin from each point to normalize the kanji to 0,0
+      pointArr[1] = Math.round(pointArr[1]);
+    })
+  })
+  kanjiTwo.forEach(strokeArr => { // split kanji into strokes
+    strokeArr.forEach(pointArr => { // split strokes into points
+      pointArr[0] = Math.round(pointArr[0]); // subtract xMin and yMin from each point to normalize the kanji to 0,0
+      pointArr[1] = Math.round(pointArr[1]);
+    })
+  })
   console.log("scoring kanji");
   console.log(kanjiOne);
   console.log(kanjiTwo);
@@ -405,7 +435,14 @@ function scoreKanji(kanjiOne, kanjiTwo) {
       pointArr[1] /= yScaleFactor;
     })
   })
-  let score = compareKanji(normalizedKanjiOne, normalizedKanjiTwo);
+  kanjiComparison["baseKanji"] = normalizedKanjiOne;
+  kanjiComparison["userKanji"] = normalizedKanjiTwo;
+  gradeKanji().then(
+    (result) => {
+      document.getElementById("score").innerHTML = result;
+      console.log("set score");
+    }
+  )
   console.log("converting kanji to text");
   let textK1 = "";
   for (let i = 0; i < kanjiOne.length; i++) {
@@ -445,8 +482,16 @@ function normalizeKanjiLinearly(kanjiCoords) {
   // gets the smallest x and y coordinates from the entire kanji
   kanjiCoords.forEach(strokeArr => { // split kanji into strokes
     strokeArr.forEach(pointArr => { // split strokes into points
-      if(pointArr[0] < xMin) xMin = pointArr[0]; // check if the x and y coords are the lowest in the kanji
-      if(pointArr[1] < yMin) yMin = pointArr[1];
+      console.log("testing for minimum with " + pointArr[0] + " and " + pointArr[1] + " against " + xMin + " and " + yMin);
+      if(pointArr[0] < xMin) { // check if the x and y coords are the lowest in the kanji
+        console.log("found that " + pointArr[0] + " was less than " + xMin + " and set new x minimum");
+        xMin = pointArr[0];
+        
+      }  
+      if(pointArr[1] < yMin) {
+        console.log("found that " + pointArr[1] + " was less than " + yMin + " and set new y minimum");
+        yMin = pointArr[1];
+      }     
     })
   })
   // normalize all coordinates to 0,0 by subtracting those minimums
@@ -462,5 +507,28 @@ function normalizeKanjiLinearly(kanjiCoords) {
 }
 
 function compareKanji(kanjiOne, kanjiTwo) {
-  return 0; 
+  let totalPoints = 0;
+  let correctPoints = 0;
+  let curB = 0;
+  for(let i = 0; i < kanjiOne.length; i++) { // for each stroke
+    for(let j = 0; j < kanjiOne[i].length; j++) { // for each point in that stroke
+
+    }
+  }
+  // first, check if the last pair of points was compared. If they were, then try to compare this pair
+  // if that doesn't work, iterate through until finding a matching point, this will return to step one.
+  // if nothing works, this point is incorrect
+}
+
+// compares 2 points on x and y accuracy within a given range, returns true/false based on if that accuracy is met
+function comparePoints(point1, point2, range) {
+  let xOne = point1[0];
+  let xTwo = point2[0];
+  let yOne = point1[1];
+  let yTwo = point2[1];
+  if(Math.abs(xOne-xTwo) < range) {
+    if(Math.abs(yOne-yTwo) < range) return true;
+  }
+  return false;
+
 }
