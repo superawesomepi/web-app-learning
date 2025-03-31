@@ -55,8 +55,7 @@ def fetch(mydb, kanjiName):
     my_cursor.execute(my_sql)
     return my_cursor.fetchall()
 
-def grade(mydb, state):
-    my_cursor = mydb.cursor()
+def grade(state):
     dataList = []
     for key,value in state.items():
         dataList.append(value)
@@ -154,7 +153,7 @@ if request['action'] == "upload":
 elif request['action'] == "fetch":
     result = fetch(mydb, "roku_4")
 elif request['action'] == "grade":
-    result = grade(mydb, request['state'])
+    result = grade(request['state'])
 else:    
     result = show(mydb)
 #sendResponse({"foo": "bar"})
