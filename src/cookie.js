@@ -11,7 +11,7 @@ let select = document.getElementById("kanjiOptions");
 let expectedStrokeString = "";
 let expectedCoordinates = [];
 let strokeCoordinates = [];
-let correctness = 100;
+let innacuracy = 10;
 let accuracy = 0;
 let userKanjiInfo = {
   "username": "",
@@ -20,7 +20,8 @@ let userKanjiInfo = {
 }
 let kanjiComparison = {
   "baseKanji": [],
-  "userKanji": []
+  "userKanji": [],
+  "leeway": 0
 }
 let isDrawing = false;
 svgctx.lineWidth = 10;
@@ -119,7 +120,7 @@ function stopDrawing(event) {
   //document.getElementById("result").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
   let xMatch = Math.abs(exStart[0]-usStart[0]) + Math.abs(exEnd[0]-usEnd[0]);
   let yMatch = Math.abs(exStart[1]-usStart[1]) + Math.abs(exEnd[1]-usEnd[1]);
-  if(xMatch+yMatch < correctness) {
+  if(xMatch+yMatch < innacuracy) {
     document.getElementById("result").innerHTML = "Stroke correct";
     accuracy++;
   } else document.getElementById("result").innerHTML = "Stroke incorrect";
@@ -347,54 +348,9 @@ function gradeKanji() {
     });
 }
 
-// function to find chains in the given array and returns the indices of those chains
-// function findChains(arr) {
-//   const chains = [];
-//   let currentChain = [];
-
-//   for (let i = 0; i < arr.length; i++) {
-//     if (i === 0 || arr[i] === arr[i - 1]) { // is there a chain? tests if current val is same as previous, or if 0 to avoid index -1
-//       currentChain.push(i);
-//     } else {
-//       if (currentChain.length > 2) { // if the current number is not the same as the previous, check if the chain is longer than 1, then it's a chain so push it to the chains array. Given this, we also don't want to consider pushing a chain unless it is at least 3 elements, instead of 2
-//         // it's worth considering that we may want to maintain the first and last elements in a chain to avoid significant breaks in coordinate data
-//         currentChain.splice(0, 1); // remove the first element
-//         currentChain.splice(currentChain.length-1, 1); // remove the last element
-//         console.log("Adding chain: " + currentChain);
-//         chains.push(currentChain);
-//       }
-//       currentChain = [i]; // update starting index
-//     }
-//   }
-
-//   if (currentChain.length > 2) { // if there is a chain at the end, pushes that also
-//     currentChain.splice(0, 1); // remove the first element
-//     currentChain.splice(currentChain.length-1, 1); // remove the last element
-//     console.log("Adding chain: " + currentChain);
-//     chains.push(currentChain);
-//   }
-
-//   return chains;
-// }
-
-// function combineUniqueArrays(arr1, arr2) {
-//   const combined = [...arr1, ...arr2];
-//   console.log("combined array of removeables is " + combined);
-//   const unique = [];
-
-//   for (const item of combined) {
-//     console.log("checking if " + item + " is present")
-//     if (!unique.includes(item)) {
-//       console.log("did not find " + item + ", adding it")
-//       unique.push(item);
-//     }
-//   }
-//   unique.sort((x, y) => y - x); // sort uses an alphabetical sort, so a comparison function is needed for a numerical sort. This will sort in descending order so array indices can be removed in reverse order to avoid index mismatches
-//   return unique;
-// }
 
 function scoreKanji(kanjiOne, kanjiTwo) {
-  // it's possible there's some nonsense going on with float comparisons, so I'm going to turn everything into an int
+  // convert to ints from strings for comparison
   kanjiOne.forEach(strokeArr => { // split kanji into strokes
     strokeArr.forEach(pointArr => { // split strokes into points
       pointArr[0] = Math.round(pointArr[0]); // subtract xMin and yMin from each point to normalize the kanji to 0,0
@@ -437,9 +393,10 @@ function scoreKanji(kanjiOne, kanjiTwo) {
   })
   kanjiComparison["baseKanji"] = normalizedKanjiOne;
   kanjiComparison["userKanji"] = normalizedKanjiTwo;
+  kanjiComparison["leeway"] = innacuracy;
   gradeKanji().then(
     (result) => {
-      document.getElementById("score").innerHTML = result;
+      document.getElementById("score").innerHTML = result[result.length-1];
       console.log("set score");
     }
   )
@@ -506,29 +463,3 @@ function normalizeKanjiLinearly(kanjiCoords) {
   return [shiftedArray, xMax, xMin];
 }
 
-function compareKanji(kanjiOne, kanjiTwo) {
-  let totalPoints = 0;
-  let correctPoints = 0;
-  let curB = 0;
-  for(let i = 0; i < kanjiOne.length; i++) { // for each stroke
-    for(let j = 0; j < kanjiOne[i].length; j++) { // for each point in that stroke
-
-    }
-  }
-  // first, check if the last pair of points was compared. If they were, then try to compare this pair
-  // if that doesn't work, iterate through until finding a matching point, this will return to step one.
-  // if nothing works, this point is incorrect
-}
-
-// compares 2 points on x and y accuracy within a given range, returns true/false based on if that accuracy is met
-function comparePoints(point1, point2, range) {
-  let xOne = point1[0];
-  let xTwo = point2[0];
-  let yOne = point1[1];
-  let yTwo = point2[1];
-  if(Math.abs(xOne-xTwo) < range) {
-    if(Math.abs(yOne-yTwo) < range) return true;
-  }
-  return false;
-
-}
