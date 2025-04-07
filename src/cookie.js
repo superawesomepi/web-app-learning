@@ -35,17 +35,16 @@ let xArr = [];
 let yArr = [];
 let coordinates = []
 let strokeList = [];
+init('list.txt')
 console.log("fetching kanji from db");
 //let expectedStrokeString = fetchKanji();
-fetchKanji().then(processStrokeArray);
+fetchKanji("roku_4").then(processStrokeArray).then(setCoordinates);
 
 function processStrokeArray (expectedStrokeArray) {
   expectedStrokeString = expectedStrokeArray.toString();
   console.log("fetched kanji from db");
   console.log(expectedStrokeString);
   console.log("loading");
-  
-  init('list.txt')
   
 }
 
@@ -225,8 +224,10 @@ function setNewKanji(filename) {
   exStrokes = filename.substring(filename.indexOf("_")+1, filename.indexOf("."));
   document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(filename);
+  console.log(filename.substring(0, filename.indexOf(".")))
   kanjiName = filename.substring(0, filename.indexOf("_"));
   userKanjiInfo["kanjiName"] = kanjiName;
+  fetchKanji(filename.substring(0, filename.indexOf("."))).then(processStrokeArray).then(setCoordinates);
 }
 
 function drawReset() {
@@ -242,7 +243,9 @@ function drawReset() {
 }
 
 function setCoordinates() {
+  console.log("setting coordinates for new kanji");
   strokeCoordinates = [];
+  console.log("on string " + expectedStrokeString);
   expectedStrokeString.replace("\n", "");
   let strokesList = expectedStrokeString.substring(9, expectedStrokeString.length-1).split("<stroke> ");
   for (let i = 0; i < strokesList.length; i++) {
@@ -320,8 +323,8 @@ function upload(text) {
   });
 }
 
-function fetchKanji() {
-  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "fetch"}'});
+function fetchKanji(kanji_name) {
+  const request = new Request('hipy.py', {method: 'POST', body: '{"action": "fetch", "state": '+JSON.stringify(kanji_name)+'}'});
   return fetch(request)
     .then(function(response) {
       if(response.ok) {

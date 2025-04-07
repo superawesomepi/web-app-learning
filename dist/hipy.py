@@ -49,9 +49,9 @@ def upload(mydb, state):
     mydb.commit()
     return dataList
 
-def fetch(mydb, kanjiName):
+def fetch(mydb, kanji_name):
     my_cursor = mydb.cursor()
-    my_sql = f"SELECT kanjiValue FROM kanji_strokes.sourceKanji WHERE kanjiName = \"{kanjiName}\";"
+    my_sql = f"SELECT kanjiValue FROM kanji_strokes.sourceKanji WHERE kanjiName = \"{kanji_name}\";"
     my_cursor.execute(my_sql)
     return my_cursor.fetchall()
 
@@ -151,7 +151,7 @@ request = json.load(sys.stdin)
 if request['action'] == "upload":
     result = upload(mydb, request['state'])
 elif request['action'] == "fetch":
-    result = fetch(mydb, "roku_4")
+    result = fetch(mydb, request['state'])
 elif request['action'] == "grade":
     result = grade(request['state'])
 else:    
