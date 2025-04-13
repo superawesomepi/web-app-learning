@@ -3,37 +3,27 @@
         <link href="./main_style.css" rel="stylesheet">
     </head>
     <body>
-        <div>
+        <div class="loginInfo">
             <input type="text" id="username">
             <button id="login" class="login">Set Username</button>
             <span>Current Username: <span id="curUser"></span></span>
         </div>
-        <img id="myKanji" src="./complete_kanji/1_1.svg" alt="Kanji image">
-        <h1>Expected strokes: <span id="exStrokes"></span></h1>
+        <div>
+            <img id="myKanji" src="./complete_kanji/ichi_1.svg" alt="Kanji image">
+            <canvas id="seeCanvas" width="600" height="450" style="border:1px solid #000000;"></canvas>
+        </div>
+        
         <h1>User strokes: <span id="usStrokes"></span></h1>
         <!--<h1>Point matching: <span id="pointMatching"></span></h1>
         <h1>Correct?: <span id="pointCheck"></span></h1>-->
-        <div class="parent">
-            <canvas id="svgCanvas" width="400" height="300" style="border:1px solid #000000;"></canvas>
-            <div class="child">
-                <canvas id="seeCanvas" width="400" height="300" style="border:1px solid #000000;"></canvas>
-            </div>
-        </div>
         <input type="color" id="colorPicker">
         <select id="kanjiOptions"><option>Options</option></select>
-        <button id="kanjiSelect" class="kanjiSelect">Select Kanji</button>
         <button id="drawReset" class="drawReset">Reset Drawing</button>
         <button id="submit" class="submit">Submit Drawing</button>
         <h1>Result: <span id="result"></span></h1>
         <h1>Graded score: <span id="score"></span></h1>
 
-        <nav> 
-            <ul> 
-                <li><a href="selection.html">Selection Page</a></li> 
-                <li><a href="options.html">Kanji Options</a></li>
-                <li><a href="results.html">Kanji Results</a></li>
-            </ul> 
-        </nav>
+        
 
         <script type="module" src="./main.bundle.js"></script>
 

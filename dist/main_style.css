@@ -1,10 +1,18 @@
-.child {
-  /* ... */
-  position: absolute;
-  top: 0;
-  left: 0;
+select {
+  height: 40px;
+  width: 150px;
 }
 
-.parent {
-  position: relative;
+.loginInfo {
+  height: 40px;
+}
+
+.drawReset {
+  height: 40px;
+  width: 150px;
+}
+
+.submit {
+  height: 40px;
+  width: 150px;
 }

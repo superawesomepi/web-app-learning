@@ -1,17 +1,14 @@
 '// @ts-ignore'
-import C2S from 'canvas2svg'; // import the library for svg canvas, otherwise canvas can only be saved as png, jpeg, or webp
-const svgCanvas = document.getElementById('svgCanvas');
 const seeCanvas = document.getElementById('seeCanvas');
 const colorPicker = document.getElementById('colorPicker');
-const svgctx = new C2S({ width: svgCanvas.width, height: svgCanvas.height }); // get the canvas object from html, and set it to use C2S
 const seectx = seeCanvas.getContext("2d");
 
 let files = [];
-let select = document.getElementById("kanjiOptions");
+const select = document.getElementById("kanjiOptions");
 let expectedStrokeString = "";
 let expectedCoordinates = [];
 let strokeCoordinates = [];
-let innacuracy = 10;
+let innacuracy = 50;
 let accuracy = 0;
 let userKanjiInfo = {
   "username": "",
@@ -24,7 +21,6 @@ let kanjiComparison = {
   "leeway": 0
 }
 let isDrawing = false;
-svgctx.lineWidth = 10;
 seectx.lineWidth = 10;
 let username = "";
 let drawNum = 1;
@@ -57,8 +53,6 @@ function startDrawing(clientX, clientY) {
   // Handle pen down event
   console.log('Pen down:', clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top); 
   isDrawing = true;
-  svgctx.beginPath();
-  svgctx.moveTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
   seectx.beginPath();
   seectx.moveTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
   xArr.push(clientX - getOffset(seeCanvas).left);
@@ -70,8 +64,6 @@ function draw(clientX, clientY) {
   console.log('Pen move:', clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top); 
   if (!isDrawing) return;
 
-  svgctx.lineTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
-  svgctx.stroke();
   seectx.lineTo(clientX - getOffset(seeCanvas).left, clientY - getOffset(seeCanvas).top);
   seectx.stroke();
   xArr.push(clientX - getOffset(seeCanvas).left);
@@ -112,18 +104,6 @@ function stopDrawing(event) {
   console.log("added stroke " + strokes + " to the save data");
   console.log(strokeList);
   
-  let exStart = strokeCoordinates[strokes-1][0];
-  let exEnd = strokeCoordinates[strokes-1][strokeCoordinates[strokes-1].length-1];
-  let usStart = coordinates[0];
-  let usEnd = coordinates[coordinates.length-1];
-  //document.getElementById("result").innerHTML = "Expected coordinates [" + exStart + ", " + exEnd + "] and got coordinates [" + usStart + ", " + usEnd + "]";
-  let xMatch = Math.abs(exStart[0]-usStart[0]) + Math.abs(exEnd[0]-usEnd[0]);
-  let yMatch = Math.abs(exStart[1]-usStart[1]) + Math.abs(exEnd[1]-usEnd[1]);
-  if(xMatch+yMatch < innacuracy) {
-    document.getElementById("result").innerHTML = "Stroke correct";
-    accuracy++;
-  } else document.getElementById("result").innerHTML = "Stroke incorrect";
-  
   coordinates = [];
   xArr = [];
   yArr = [];
@@ -162,7 +142,10 @@ seeCanvas.addEventListener('touchend', stopDrawing);
 document.getElementById("login").addEventListener('click', login);
 document.getElementById("submit").addEventListener('click', submit);
 document.getElementById("drawReset").addEventListener('click', drawReset);
-document.getElementById("kanjiSelect").addEventListener('click', kanjiSelect);
+select.addEventListener('change', function() {
+  console.log("changing selected kanji");
+  kanjiSelect();
+});
 
 // returns the offset of an element in relation to the webpage. This is needed for the canvases, although it seems to be relative position and doesn't work properly if the page is scrollable, which I need to fix later.
 function getOffset(element) {
@@ -199,7 +182,6 @@ function getRandKanji(text) {
   random = 5;
   document.getElementById('myKanji').src='complete_kanji/' + files[random];
   exStrokes = files[random].substring(files[random].indexOf("_")+1, files[random].indexOf("."));
-  document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(files[random]);
   kanjiName = files[random].substring(0, files[random].indexOf("_"));
   userKanjiInfo["kanjiName"] = kanjiName;
@@ -222,7 +204,6 @@ function kanjiSelect() {
 function setNewKanji(filename) {
   document.getElementById('myKanji').src='complete_kanji/' + filename;
   exStrokes = filename.substring(filename.indexOf("_")+1, filename.indexOf("."));
-  document.getElementById("exStrokes").innerHTML = exStrokes;
   console.log(filename);
   console.log(filename.substring(0, filename.indexOf(".")))
   kanjiName = filename.substring(0, filename.indexOf("_"));
@@ -232,7 +213,6 @@ function setNewKanji(filename) {
 
 function drawReset() {
     console.log('reset drawing');
-    svgctx.clearRect(0, 0, svgCanvas.width, svgCanvas.height);
     seectx.clearRect(0, 0, seeCanvas.width, seeCanvas.height);
     strokes = 0;
     strokeList = [];
@@ -284,24 +264,18 @@ function login() {
 
 function submit() {
     if(strokes == exStrokes) {
-      document.getElementById("result").innerHTML = "Stroke count matched! Score of " + (accuracy/exStrokes)*100;
-      console.log(accuracy + ", " + exStrokes + ", " + (accuracy/exStrokes)*100)
+      document.getElementById("result").innerHTML = "Stroke count matched!";
     } else document.getElementById("result").innerHTML = "Stroke count incorrect."
     accuracy = 0;
-    //const svg = svgctx.getSerializedSvg();
-    //let filename = drawNum + ".svg"
     let filename = username + "-" + kanjiName + ".txt"
     const link = document.createElement('a');
     let text = "";
     for (let i = 0; i < strokeList.length; i++) {
       text = text + "<stroke> " + strokeList[i] + "\n";
     }
-    //link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
     link.download = filename;
     link.click();
-    //let dataURL = canvas.toDataURL(filename)
-    //saveData(dataURL, filename)
     console.log('Saved data ' + filename)
     scoreKanji(strokeCoordinates, strokeList);
     upload(text);
@@ -399,7 +373,7 @@ function scoreKanji(kanjiOne, kanjiTwo) {
   kanjiComparison["leeway"] = innacuracy;
   gradeKanji().then(
     (result) => {
-      document.getElementById("score").innerHTML = result[result.length-1];
+      document.getElementById("score").innerHTML = result[result.length-1].toFixed(2)+ "%";
       console.log("set score");
     }
   )
