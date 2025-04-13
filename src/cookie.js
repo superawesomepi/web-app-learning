@@ -8,7 +8,7 @@ const select = document.getElementById("kanjiOptions");
 let expectedStrokeString = "";
 let expectedCoordinates = [];
 let strokeCoordinates = [];
-let innacuracy = 50;
+let leniency = 30;
 let accuracy = 0;
 let userKanjiInfo = {
   "username": "",
@@ -31,6 +31,9 @@ let xArr = [];
 let yArr = [];
 let coordinates = []
 let strokeList = [];
+var slider = document.getElementById("myRange");
+var output = document.getElementById("demo");
+output.innerHTML = slider.value;
 init('list.txt')
 console.log("fetching kanji from db");
 //let expectedStrokeString = fetchKanji();
@@ -42,6 +45,11 @@ function processStrokeArray (expectedStrokeArray) {
   console.log(expectedStrokeString);
   console.log("loading");
   
+}
+
+slider.oninput = function() {
+  output.innerHTML = this.value;
+  //leniency = this.value;
 }
 
 colorPicker.addEventListener('change', (event) => {
@@ -370,7 +378,8 @@ function scoreKanji(kanjiOne, kanjiTwo) {
   })
   kanjiComparison["baseKanji"] = normalizedKanjiOne;
   kanjiComparison["userKanji"] = normalizedKanjiTwo;
-  kanjiComparison["leeway"] = innacuracy;
+  kanjiComparison["leeway"] = leniency;
+  console.log("grading with a leniency of " + kanjiComparison["leeway"]);
   gradeKanji().then(
     (result) => {
       document.getElementById("score").innerHTML = result[result.length-1].toFixed(2)+ "%";
