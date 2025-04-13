@@ -49,7 +49,7 @@ function processStrokeArray (expectedStrokeArray) {
 
 slider.oninput = function() {
   output.innerHTML = this.value;
-  //leniency = this.value;
+  leniency = parseInt(this.value);
 }
 
 colorPicker.addEventListener('change', (event) => {
