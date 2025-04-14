@@ -281,9 +281,9 @@ function submit() {
     for (let i = 0; i < strokeList.length; i++) {
       text = text + "<stroke> " + strokeList[i] + "\n";
     }
-    link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
-    link.download = filename;
-    link.click();
+    //link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+    //link.download = filename;
+    //link.click();
     console.log('Saved data ' + filename)
     scoreKanji(strokeCoordinates, strokeList);
     upload(text);
