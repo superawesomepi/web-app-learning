@@ -8,10 +8,10 @@ import statistics
 
 def dbconnect():
     mydb = mysql.connector.connect(
-        host = "mysql.craggypeak.com",
-        user = "kanjiuser  ",
-        passwd = "hiraganakatakana",
-        database = "kanji_strokes"
+        host = "",
+        user = "",
+        passwd = "",
+        database = ""
     )   
     return mydb
 
